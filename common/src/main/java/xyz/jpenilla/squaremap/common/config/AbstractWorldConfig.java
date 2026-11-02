@@ -3,21 +3,19 @@ package xyz.jpenilla.squaremap.common.config;
 import io.leangen.geantyref.TypeToken;
 import java.lang.reflect.Method;
 import java.util.List;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.server.level.ServerLevel;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.spongepowered.configurate.ConfigurationNode;
 import xyz.jpenilla.squaremap.common.util.ReflectionUtil;
-import xyz.jpenilla.squaremap.common.world.WorldIdentifiers;
+import xyz.jpenilla.squaremap.common.util.Util;
 
 @SuppressWarnings("unused")
 public abstract class AbstractWorldConfig<P extends AbstractConfig> {
     public static final String DOT = "____dot____";
-    private static final @Nullable Class<?> PAPER_MIGRATION_CLASS = ReflectionUtil.findClass("xyz.jpenilla.squaremap.paper.config.WorldNameToKeyMigration");
+    private static final @Nullable Class<?> PAPER_MIGRATION_CLASS = ReflectionUtil.findClass("xyz.jpenilla.squaremap.paper.util.WorldNameToKeyMigration");
     private static final @Nullable Method PAPER_MIGRATE_METHOD = PAPER_MIGRATION_CLASS == null ? null : ReflectionUtil.needMethod(PAPER_MIGRATION_CLASS, List.of("migrate"), AbstractConfig.class, ServerLevel.class);
 
     final String worldName;
-    protected final RegistryAccess registries;
+    protected final ServerLevel world;
     protected final P parent;
     private final Class<? extends AbstractWorldConfig<P>> configClass;
 
@@ -27,8 +25,8 @@ public abstract class AbstractWorldConfig<P extends AbstractConfig> {
         final ServerLevel level
     ) {
         this.configClass = worldConfigClass;
-        this.registries = level.registryAccess();
-        this.worldName = WorldIdentifiers.configName(level)
+        this.world = level;
+        this.worldName = Util.levelConfigName(level)
             .replace(".", DOT); // replace '.' as we later split on it (see AbstractConfig.splitPath)
         this.parent = parent;
 
@@ -101,10 +99,6 @@ public abstract class AbstractWorldConfig<P extends AbstractConfig> {
             return this.parent.get(type, wrapDefaultPath(path), def);
         }
         return this.parent.get(type, this.wrapPath(path), this.parent.get(type, wrapDefaultPath(path), def));
-    }
-
-    protected final ConfigurationNode defaultNode(final String path) {
-        return this.parent.config.node(Config.splitPath(wrapDefaultPath(path)));
     }
 
     private boolean virtual(String path) {

@@ -2,6 +2,7 @@ package xyz.jpenilla.squaremap.sponge;
 
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+
 import java.lang.invoke.MethodHandles;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -22,10 +23,11 @@ import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.plugin.PluginContainer;
 import xyz.jpenilla.squaremap.common.SquaremapCommon;
 import xyz.jpenilla.squaremap.common.SquaremapPlatform;
-import xyz.jpenilla.squaremap.common.web.PlayerDataPublisher;
-import xyz.jpenilla.squaremap.common.web.WebSettingsPublisher;
+import xyz.jpenilla.squaremap.common.task.UpdatePlayers;
+import xyz.jpenilla.squaremap.common.task.UpdateWorldData;
 import xyz.jpenilla.squaremap.sponge.listener.MapUpdateListener;
 import xyz.jpenilla.squaremap.sponge.listener.WorldLoadListener;
+import xyz.jpenilla.squaremap.sponge.network.SpongeNetworking;
 
 @DefaultQualifier(NonNull.class)
 public final class SquaremapSponge implements SquaremapPlatform {
@@ -49,6 +51,7 @@ public final class SquaremapSponge implements SquaremapPlatform {
         this.game = game;
         this.injector = injector;
         this.common = injector.getInstance(SquaremapCommon.class);
+        this.game.eventManager().registerListeners(this.pluginContainer, injector.getInstance(SpongeNetworking.class), MethodHandles.lookup());
     }
 
     void init() {
@@ -132,14 +135,14 @@ public final class SquaremapSponge implements SquaremapPlatform {
             Task.builder()
                 .plugin(this.pluginContainer)
                 .interval(Duration.ofSeconds(5))
-                .execute(this.injector.getInstance(WebSettingsPublisher.class))
+                .execute(this.injector.getInstance(UpdateWorldData.class))
                 .build()
         );
         this.updatePlayers = this.game.server().scheduler().submit(
             Task.builder()
                 .plugin(this.pluginContainer)
                 .interval(Duration.ofSeconds(1))
-                .execute(this.injector.getInstance(PlayerDataPublisher.class))
+                .execute(this.injector.getInstance(UpdatePlayers.class))
                 .build()
         );
     }

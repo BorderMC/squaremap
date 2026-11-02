@@ -21,6 +21,39 @@ img.leaflet-tile {
     image-rendering: pixelated;
     image-rendering: -moz-crisp-edges;
 }
+.ice-map-marker {
+    display: grid;
+    width: 20px;
+    height: 20px;
+    place-items: center;
+    color: #ffffff;
+    filter: drop-shadow(0 1px 2px #000000);
+}
+.ice-map-marker svg {
+    width: 20px;
+    height: 20px;
+}
+.ice-map-popup {
+    min-width: 13rem;
+    max-width: 20rem;
+}
+.ice-map-popup h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1rem;
+}
+.ice-map-popup dl {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.25rem 0.75rem;
+    margin: 0;
+}
+.ice-map-popup dt {
+    font-weight: 700;
+}
+.ice-map-popup dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
 .nameplate-container {
     display: flex;
     gap: 0.375rem;

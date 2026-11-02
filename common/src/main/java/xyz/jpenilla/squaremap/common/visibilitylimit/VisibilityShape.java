@@ -21,6 +21,11 @@ public interface VisibilityShape {
         public boolean shouldRenderColumn(final MapWorld world, final int blockX, final int blockZ) {
             return true;
         }
+
+        @Override
+        public int countChunksInRegion(final MapWorld world, final int regionX, final int regionZ) {
+            return 32 * 32;
+        }
     };
 
     boolean shouldRenderChunk(MapWorld world, int chunkX, int chunkZ);
@@ -28,4 +33,6 @@ public interface VisibilityShape {
     boolean shouldRenderRegion(MapWorld world, int regionX, int regionZ);
 
     boolean shouldRenderColumn(MapWorld world, int blockX, int blockZ);
+
+    int countChunksInRegion(MapWorld world, int regionX, int regionZ);
 }

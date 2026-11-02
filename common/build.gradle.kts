@@ -8,12 +8,11 @@ neoForge {
     neoFormVersion = libs.versions.neoform.get()
   }
   accessTransformers.from(layout.projectDirectory.file("src/main/resources/squaremap-common-at.cfg"))
-  addModdingDependenciesTo(sourceSets.test.get())
 }
 
 dependencies {
   api(projects.squaremapApi)
-  api("com.google.inject:guice:${libs.versions.guice.get()}:classes") {
+  api(libs.guice) {
     exclude("com.google.guava") // provided by minecraft
   }
   api(libs.guiceAssistedInject) {
@@ -52,13 +51,7 @@ dependencies {
     isTransitive = false // depends on guava, provided by mc at runtime
   }
 
-  compileOnly("curse.maven:moonrise-1096335:8986192")
-
-  testImplementation(platform(libs.junitBom))
-  testImplementation(libs.junitJupiter)
-  testRuntimeOnly(libs.junitLauncher)
-  testRuntimeOnly(libs.adventureApi)
-  testRuntimeOnly(libs.miniMessage)
+  compileOnly("curse.maven:moonrise-1096335:6008360")
 }
 
 @UntrackedTask(because = "Up-to-date checking for this needs further thought")
@@ -91,8 +84,8 @@ val buildFrontend = tasks.register<BuildFrontend>("buildFrontend") {
   workingDir = layout.settingsDirectory.dir("web")
   val isWindows = System.getProperty("os.name").lowercase().contains("win")
   command = if (isWindows) {
-    // Not sure if this will always work, Windows users can complain if it doesn't
-    listOf("bun", "run", "build")
+    // npx provides Bun for Windows builds when it is not installed globally.
+    listOf("npx.cmd", "--yes", "bun", "run", "build")
   } else {
     listOf("bash", "-c", "bun run build")
   }

@@ -11,8 +11,8 @@ import xyz.jpenilla.squaremap.common.command.Commands;
 import xyz.jpenilla.squaremap.common.command.PlatformCommands;
 import xyz.jpenilla.squaremap.common.command.SquaremapCommand;
 import xyz.jpenilla.squaremap.common.config.Messages;
-import xyz.jpenilla.squaremap.common.util.text.Components;
-import xyz.jpenilla.squaremap.common.world.MapWorldInternal;
+import xyz.jpenilla.squaremap.common.data.MapWorldInternal;
+import xyz.jpenilla.squaremap.common.util.Components;
 
 import static org.incendo.cloud.minecraft.extras.RichDescription.richDescription;
 import static org.incendo.cloud.parser.standard.IntegerParser.integerParser;
@@ -53,11 +53,14 @@ public final class RadiusRenderCommand extends SquaremapCommand {
             center = new BlockPos(0, 0, 0);
         }
 
-        if (!world.renderScheduler().startRadiusRender(center, radius)) {
+        if (world.renderManager().isRendering()) {
             sender.sendMessage(Messages.RENDER_IN_PROGRESS.withPlaceholders(Components.worldPlaceholder(world)));
             return;
         }
 
         sender.sendMessage(Components.miniMessage(Messages.LOG_STARTED_RADIUSRENDER, Components.worldPlaceholder(world)));
+        world.renderManager().startRender(
+            context.get(Commands.RENDER_FACTORY).createRadiusRender(world, center, radius)
+        );
     }
 }

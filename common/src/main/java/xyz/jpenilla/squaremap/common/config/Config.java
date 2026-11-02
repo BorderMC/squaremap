@@ -4,14 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 import org.spongepowered.configurate.NodePath;
 import org.spongepowered.configurate.transformation.ConfigurationTransformation;
-import xyz.jpenilla.squaremap.common.SquaremapDirectories;
+import xyz.jpenilla.squaremap.common.data.DirectoryProvider;
 
 @SuppressWarnings("unused")
 public final class Config extends AbstractConfig {
-    private static final int LATEST_VERSION = 3;
+    private static final int LATEST_VERSION = 2;
 
-    Config(final SquaremapDirectories directories) {
-        super(directories.dataDirectory(), Config.class, "config.yml", LATEST_VERSION);
+    Config(final DirectoryProvider directoryProvider) {
+        super(directoryProvider.dataDirectory(), Config.class, "config.yml", LATEST_VERSION);
     }
 
     @Override
@@ -26,52 +26,13 @@ public final class Config extends AbstractConfig {
             })
             .build();
 
-        final ConfigurationTransformation twoToThree = ConfigurationTransformation.builder()
-            .addAction(NodePath.path("world-settings"), Transformations.eachMapChild(world -> {
-                final var map = world.node("map");
-                final var workers = map.node("max-render-threads");
-                if (!workers.virtual()) {
-                    final Object value = workers.getInt() == -1 ? "default" : workers.raw();
-                    for (final String mode : List.of("full", "radius")) {
-                        final var target = map.node("render", mode, "workers");
-                        if (target.virtual()) {
-                            target.raw(value);
-                        }
-                    }
-                    workers.raw(null);
-                }
-                final var background = map.node("background-render");
-                for (final String key : List.of("enabled", "interval-seconds", "max-chunks-per-interval", "max-render-threads")) {
-                    final var old = background.node(key);
-                    if (old.virtual()) {
-                        continue;
-                    }
-                    final var target = map.node("render", "background", key.equals("max-render-threads") ? "workers" : key);
-                    Object value = old.raw();
-                    if (key.equals("max-render-threads") && old.getInt() == -1) {
-                        value = "default";
-                    } else if (key.equals("max-chunks-per-interval") && old.getInt() == 1024) {
-                        value = 2048;
-                    }
-                    if (target.virtual()) {
-                        target.raw(value);
-                    }
-                    old.raw(null);
-                }
-                if (background.childrenMap().isEmpty()) {
-                    background.raw(null);
-                }
-            }))
-            .build();
-
-        versionedBuilder.addVersion(2, oneToTwo);
-        versionedBuilder.addVersion(LATEST_VERSION, twoToThree);
+        versionedBuilder.addVersion(LATEST_VERSION, oneToTwo);
     }
 
     static Config config;
 
-    public static void reload(final SquaremapDirectories directories) {
-        config = new Config(directories);
+    public static void reload(final DirectoryProvider directoryProvider) {
+        config = new Config(directoryProvider);
         config.readConfig(Config.class, null);
     }
 
@@ -125,6 +86,14 @@ public final class Config extends AbstractConfig {
         UI_COORDINATES_ENABLED = config.getBoolean("settings.ui.coordinates.enabled", UI_COORDINATES_ENABLED);
         UI_LINK_ENABLED = config.getBoolean("settings.ui.link.enabled", UI_LINK_ENABLED);
         UI_SIDEBAR_PINNED = config.getString("settings.ui.sidebar.pinned", UI_SIDEBAR_PINNED);
+    }
+
+    public static boolean ICE_MAP_ENABLED = true;
+    public static String ICE_MAP_DATA_URL = "https://raw.githubusercontent.com/BorderMC/ice-map-data/refs/heads/main/data/network.v1.json";
+
+    private static void iceMapSettings() {
+        ICE_MAP_ENABLED = config.getBoolean("settings.ice-map.enabled", ICE_MAP_ENABLED);
+        ICE_MAP_DATA_URL = config.getString("settings.ice-map.data-url", ICE_MAP_DATA_URL);
     }
 
     public static String MAIN_COMMAND_LABEL = "squaremap";

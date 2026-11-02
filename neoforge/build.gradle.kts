@@ -1,4 +1,3 @@
-import me.modmuss50.mpp.platforms.modrinth.ModrinthEnvironment
 import net.neoforged.moddevgradle.internal.RunGameTask
 
 plugins {
@@ -77,7 +76,7 @@ neoForgeModsToml {
   mitLicense()
   issueTrackerUrl = githubUrl.map { "${it}issues/" }
   showAsResourcePack = false
-  mixins("squaremap-neoforge.mixins.json")
+  mixins("squaremap-forge.mixins.json")
 
   conventionMod("squaremap") {
     displayName = "squaremap"
@@ -93,14 +92,11 @@ neoForgeModsToml {
       required("adventure_platform_neoforge", "*") {
         after()
       }
-      optional("moonrise", "*")
     }
   }
 }
 
 publishMods.modrinth {
-  environment = ModrinthEnvironment.SERVER_ONLY_CLIENT_OPTIONAL
   minecraftVersions.add(libs.versions.minecraft)
   modLoaders.add("neoforge")
-  optional("moonrise-opt")
 }

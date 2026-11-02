@@ -10,6 +10,8 @@
         "lint": "oxfmt --check . && oxlint --type-aware --type-check ."
     },
     "devDependencies": {
+        "@fortawesome/fontawesome-svg-core": "^7.1.0",
+        "@fortawesome/free-solid-svg-icons": "^7.1.0",
         "@types/leaflet": "^1.9.21",
         "leaflet": "^1.9.4",
         "oxfmt": "^0.72.0",

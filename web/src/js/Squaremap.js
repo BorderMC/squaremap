@@ -29,6 +29,8 @@ class SquaremapMap {
     coordinates;
     /** @type {UILink} */
     uiLink;
+    /** @type {Settings_IceMap} */
+    iceMap;
     /** @type {number} */
     tick_count;
     /** @type {boolean} */
@@ -83,6 +85,7 @@ class SquaremapMap {
 
                 this.staticMode = json.static || false;
                 this.title = json.ui.title;
+                this.iceMap = json.ice_map;
                 this.sidebar = new Sidebar(json.ui.sidebar, this.getUrlParam("show_sidebar", "true") === "true");
                 this.playerList = new PlayerList(json.ui.sidebar);
                 this.worldList = new WorldList(json.worlds);

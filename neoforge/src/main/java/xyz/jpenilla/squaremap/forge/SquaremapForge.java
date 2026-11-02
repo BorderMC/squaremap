@@ -10,7 +10,6 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.GameShuttingDownEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -24,17 +23,15 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.framework.qual.DefaultQualifier;
 import xyz.jpenilla.squaremap.common.SquaremapCommon;
 import xyz.jpenilla.squaremap.common.SquaremapPlatform;
+import xyz.jpenilla.squaremap.common.WorldManagerImpl;
+import xyz.jpenilla.squaremap.common.data.MapWorldInternal;
 import xyz.jpenilla.squaremap.common.inject.SquaremapModulesBuilder;
-import xyz.jpenilla.squaremap.common.web.PlayerDataPublisher;
-import xyz.jpenilla.squaremap.common.web.WebSettingsPublisher;
-import xyz.jpenilla.squaremap.common.world.MapWorldInternal;
-import xyz.jpenilla.squaremap.common.world.WorldManagerImpl;
-import xyz.jpenilla.squaremap.forge.client.ForgeFluidColorExporter;
+import xyz.jpenilla.squaremap.common.task.UpdatePlayers;
+import xyz.jpenilla.squaremap.common.task.UpdateWorldData;
+import xyz.jpenilla.squaremap.forge.data.ForgeMapWorld;
 import xyz.jpenilla.squaremap.forge.event.ForgeMapUpdates;
 import xyz.jpenilla.squaremap.forge.inject.module.ForgeModule;
-import xyz.jpenilla.squaremap.forge.player.ForgePlayerManager;
-import xyz.jpenilla.squaremap.forge.server.ForgeServerAccess;
-import xyz.jpenilla.squaremap.forge.world.ForgeMapWorld;
+import xyz.jpenilla.squaremap.forge.network.ForgeNetworking;
 
 @DefaultQualifier(NonNull.class)
 @Mod("squaremap")
@@ -44,8 +41,8 @@ public final class SquaremapForge implements SquaremapPlatform {
     private final ForgeServerAccess serverAccess;
     private final WorldManagerImpl worldManager;
     private final ModContainer container;
-    private @Nullable PlayerDataPublisher updatePlayers;
-    private @Nullable WebSettingsPublisher updateWorldData;
+    private @Nullable UpdatePlayers updatePlayers;
+    private @Nullable UpdateWorldData updateWorldData;
 
     public SquaremapForge(final IEventBus modEventBus, final ModContainer modContainer) {
         this.injector = Guice.createInjector(
@@ -64,17 +61,13 @@ public final class SquaremapForge implements SquaremapPlatform {
         this.container = this.injector.getInstance(ModContainer.class);
         this.registerLifecycleListeners();
         this.injector.getInstance(ForgeMapUpdates.class).register();
+        this.injector.getInstance(ForgeNetworking.class).register();
         this.injector.getInstance(ForgePlayerManager.class).setupCapabilities();
     }
 
     private void registerLifecycleListeners() {
         NeoForge.EVENT_BUS.addListener((ServerStartingEvent event) -> this.serverAccess.setServer(event.getServer()));
-        NeoForge.EVENT_BUS.addListener((ServerStoppedEvent event) -> {
-            if (event.getServer().isDedicatedServer()) {
-                this.common.shutdown();
-            }
-            this.serverAccess.clearServer();
-        });
+        NeoForge.EVENT_BUS.addListener((ServerStoppedEvent event) -> this.serverAccess.clearServer());
         final AtomicBoolean exportedFluids = new AtomicBoolean(false);
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent event) -> exportedFluids.set(false));
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, (LevelEvent.Load event) -> {
@@ -93,18 +86,14 @@ public final class SquaremapForge implements SquaremapPlatform {
             this.worldManager.worldUnloaded(serverLevel);
         });
         NeoForge.EVENT_BUS.addListener(new TickEndListener());
-        NeoForge.EVENT_BUS.addListener((GameShuttingDownEvent event) -> {
-            if (FMLEnvironment.getDist().isClient()) {
-                this.common.shutdown();
-            }
-        });
+        NeoForge.EVENT_BUS.addListener((GameShuttingDownEvent event) -> this.common.shutdown());
         NeoForge.EVENT_BUS.addListener((ServerStartedEvent event) -> this.common.updateCheck());
     }
 
     @Override
     public void startCallback() {
-        this.updatePlayers = this.injector.getInstance(PlayerDataPublisher.class);
-        this.updateWorldData = this.injector.getInstance(WebSettingsPublisher.class);
+        this.updatePlayers = this.injector.getInstance(UpdatePlayers.class);
+        this.updateWorldData = this.injector.getInstance(UpdateWorldData.class);
     }
 
     @Override

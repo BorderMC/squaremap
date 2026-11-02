@@ -6,14 +6,11 @@
     "ignoreDeps": [
         "com.mojang:minecraft",
         "dev.architectury:architectury-loom",
-        "xyz.jpenilla.quiet-fabric-loom:xyz.jpenilla.quiet-fabric-loom.gradle.plugin"
+        "net.fabricmc:quiet-fabric-loom"
     ],
     "labels": [
         "dependencies"
     ],
-    "lockFileMaintenance": {
-        "enabled": true
-    },
     "packageRules": [
         {
             "description": "Correct version handling for dependencies with format major.minor.patch+mcver",
@@ -28,7 +25,7 @@
             "matchPackageNames": [
                 "net.neoforged:neoforge"
             ],
-            "versioning": "regex:^(?<compatibility>(?:\\d+\\.){3})(?<minor>\\d+)(?:-beta)?$"
+            "versioning": "regex:^(?<compatibility>(\\d+\\.){2})(?<minor>\\d+)(-beta)?$"
         },
         {
             "matchManagers": [

@@ -1,4 +1,3 @@
-import me.modmuss50.mpp.platforms.modrinth.ModrinthEnvironment
 import xyz.jpenilla.resourcefactory.fabric.Environment
 
 plugins {
@@ -6,18 +5,21 @@ plugins {
   alias(libs.plugins.resource.factory.fabric)
 }
 
-loom {
-  accessWidenerPath = layout.projectDirectory.file("src/main/resources/squaremap-fabric.accesswidener")
-  mods.register("squaremap") {
-    sourceSet("main")
-    dependency((dependencies.create(projects.squaremapCommon) as ModuleDependency).apply { isTransitive = false })
+loom.accessWidenerPath = layout.projectDirectory.file("src/main/resources/squaremap-fabric.accesswidener")
+
+repositories {
+  maven("https://maven.ladysnake.org/releases/") {
+    mavenContent {
+      includeGroup("org.ladysnake.cardinal-components-api")
+    }
   }
 }
 
 dependencies {
   minecraft(libs.minecraft)
-  implementation(libs.fabricLoader)
-  implementation(libs.fabricApi)
+  mappings(loom.officialMojangMappings())
+  modImplementation(libs.fabricLoader)
+  modImplementation(libs.fabricApi)
 
   shade(projects.squaremapCommon) {
     exclude("org.incendo", "cloud-core")
@@ -26,13 +28,13 @@ dependencies {
     exclude("io.leangen.geantyref")
   }
 
-  implementation(libs.adventurePlatformFabric)
+  modImplementation(libs.adventurePlatformFabric)
   include(libs.adventurePlatformFabric)
 
-  implementation(libs.cloudFabric)
+  modImplementation(libs.cloudFabric)
   include(libs.cloudFabric)
 
-  implementation(libs.fabricPermissionsApi)
+  modImplementation(libs.fabricPermissionsApi)
   include(libs.fabricPermissionsApi)
 
   implementation(libs.cloudMinecraftExtras) {
@@ -42,9 +44,14 @@ dependencies {
   implementation(libs.cloudConfirmation)
   include(libs.cloudConfirmation)
   include(libs.cloudProcessorsCommon)
+
+  modImplementation(libs.cardinalComponentsBase)
+  include(libs.cardinalComponentsBase)
+  modImplementation(libs.cardinalComponentsEntity)
+  include(libs.cardinalComponentsEntity)
 }
 
-tasks.shadowJar {
+tasks.remapJar {
   archiveFileName = productionJarName(libs.versions.minecraft)
 }
 
@@ -65,6 +72,8 @@ fabricModJson {
   }
   environment = Environment.ANY
   mainEntrypoint("xyz.jpenilla.squaremap.fabric.SquaremapFabricInitializer")
+  entrypoint("cardinal-components", "xyz.jpenilla.squaremap.fabric.SquaremapComponentInitializer")
+  custom.put("cardinal-components", simpleCustomValueList(listOf("squaremap:player_component")))
   mitLicense()
   mixin("squaremap-fabric.mixins.json")
   accessWidener = "squaremap-fabric.accesswidener"
@@ -73,13 +82,10 @@ fabricModJson {
   depends("minecraft", libs.versions.minecraft.get())
   depends("cloud", "*")
   depends("adventure-platform-fabric", "*")
-  recommends("moonrise", "*")
 }
 
 publishMods.modrinth {
-  environment = ModrinthEnvironment.SERVER_ONLY_CLIENT_OPTIONAL
   minecraftVersions.add(libs.versions.minecraft)
   modLoaders.add("fabric")
   requires("fabric-api")
-  optional("moonrise-opt")
 }

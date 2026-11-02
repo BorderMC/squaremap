@@ -5,15 +5,18 @@ import com.google.inject.Injector;
 import javax.inject.Inject;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;
+import org.spongepowered.api.ResourceKey;
 import org.spongepowered.api.data.DataRegistration;
 import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 import org.spongepowered.api.event.Listener;
+import org.spongepowered.api.event.lifecycle.RegisterChannelEvent;
 import org.spongepowered.api.event.lifecycle.RegisterDataEvent;
+import org.spongepowered.api.network.channel.raw.RawDataChannel;
 import org.spongepowered.plugin.builtin.jvm.Plugin;
 import xyz.jpenilla.squaremap.common.inject.SquaremapModulesBuilder;
+import xyz.jpenilla.squaremap.common.network.NetworkingHandler;
+import xyz.jpenilla.squaremap.sponge.data.SpongeMapWorld;
 import xyz.jpenilla.squaremap.sponge.inject.module.SpongeModule;
-import xyz.jpenilla.squaremap.sponge.player.SpongePlayerManager;
-import xyz.jpenilla.squaremap.sponge.world.SpongeMapWorld;
 
 // Sponge uses Guice 5.x which supports javax.inject.Inject;
 // We use Guice 7.x and as such relocate it's @Inject and can't use it here without complicating the build.
@@ -41,6 +44,12 @@ public final class SquaremapSpongeBootstrap {
                 .build()
         );
         injector.getInstance(SquaremapSponge.class).init();
+    }
+
+    @Listener
+    public void channelRegistration(final RegisterChannelEvent event) {
+        final ResourceKey key = (ResourceKey) (Object) NetworkingHandler.CHANNEL;
+        event.register(key, RawDataChannel.class);
     }
 
     @Listener

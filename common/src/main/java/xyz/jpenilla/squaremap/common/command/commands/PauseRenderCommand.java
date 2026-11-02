@@ -4,13 +4,13 @@ import com.google.inject.Inject;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;
 import org.incendo.cloud.context.CommandContext;
-import xyz.jpenilla.squaremap.common.command.CommandWorldResolver;
 import xyz.jpenilla.squaremap.common.command.Commander;
 import xyz.jpenilla.squaremap.common.command.Commands;
 import xyz.jpenilla.squaremap.common.command.SquaremapCommand;
 import xyz.jpenilla.squaremap.common.config.Messages;
-import xyz.jpenilla.squaremap.common.util.text.Components;
-import xyz.jpenilla.squaremap.common.world.MapWorldInternal;
+import xyz.jpenilla.squaremap.common.data.MapWorldInternal;
+import xyz.jpenilla.squaremap.common.util.CommandUtil;
+import xyz.jpenilla.squaremap.common.util.Components;
 
 import static org.incendo.cloud.minecraft.extras.RichDescription.richDescription;
 import static xyz.jpenilla.squaremap.common.command.argument.parser.MapWorldParser.mapWorldParser;
@@ -34,11 +34,11 @@ public final class PauseRenderCommand extends SquaremapCommand {
 
     private void executePauseRender(final CommandContext<Commander> context) {
         final Commander sender = context.sender();
-        final MapWorldInternal world = CommandWorldResolver.resolveWorld(context);
+        final MapWorldInternal world = CommandUtil.resolveWorld(context);
 
-        world.renderScheduler().pauseRenders(!world.renderScheduler().rendersPaused());
+        world.renderManager().pauseRenders(!world.renderManager().rendersPaused());
 
-        if (world.renderScheduler().rendersPaused()) {
+        if (world.renderManager().rendersPaused()) {
             sender.sendMessage(Messages.PAUSED_RENDER.withPlaceholders(Components.worldPlaceholder(world)));
         } else {
             sender.sendMessage(Messages.UNPAUSED_RENDER.withPlaceholders(Components.worldPlaceholder(world)));

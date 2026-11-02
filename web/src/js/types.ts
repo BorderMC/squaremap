@@ -2,6 +2,12 @@ export interface Settings {
     static: boolean;
     worlds: Settings_World[];
     ui: Settings_UI;
+    ice_map: Settings_IceMap;
+}
+
+export interface Settings_IceMap {
+    enabled: boolean;
+    data_url: string;
 }
 
 export interface Settings_World {

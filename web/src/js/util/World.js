@@ -1,4 +1,5 @@
 import { Options, Rectangle, PolyLine, Polygon, Circle, Ellipse, Icon } from "./Markers.js";
+import { IceMap } from "./IceMap.js";
 import { S } from "../Squaremap.js";
 import L from "leaflet";
 
@@ -21,6 +22,8 @@ class World {
     zoom;
     /** @type {WorldSettings_Spawn} */
     spawn;
+    /** @type {IceMap} */
+    iceMap;
 
     /**
      * @param json {Settings_World}
@@ -36,6 +39,7 @@ class World {
         this.marker_update_interval = 5;
         this.tiles_update_interval = 15;
         this.staticNeedsMarkerTick = false;
+        this.iceMap = new IceMap();
     }
     tick() {
         // refresh map tile layer
@@ -64,6 +68,7 @@ class World {
     }
     unload() {
         S.playerList.clearPlayerMarkers();
+        this.iceMap.unload();
         const keys = Array.from(this.markerLayers.keys());
         for (let i = 0; i < keys.length; i++) {
             const layer = this.markerLayers.get(keys[i]);
@@ -103,6 +108,8 @@ class World {
 
                 // setup tile layers
                 S.layerControl.setupTileLayers(this);
+
+                this.iceMap.load();
 
                 // force clear player markers
                 S.playerList.clearPlayerMarkers();

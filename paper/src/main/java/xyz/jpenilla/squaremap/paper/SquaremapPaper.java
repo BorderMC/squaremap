@@ -16,11 +16,12 @@ import org.checkerframework.framework.qual.DefaultQualifier;
 import xyz.jpenilla.squaremap.api.Squaremap;
 import xyz.jpenilla.squaremap.common.SquaremapCommon;
 import xyz.jpenilla.squaremap.common.SquaremapPlatform;
-import xyz.jpenilla.squaremap.common.web.PlayerDataPublisher;
-import xyz.jpenilla.squaremap.common.web.WebSettingsPublisher;
+import xyz.jpenilla.squaremap.common.task.UpdatePlayers;
+import xyz.jpenilla.squaremap.common.task.UpdateWorldData;
 import xyz.jpenilla.squaremap.paper.folia.FoliaInitListener;
 import xyz.jpenilla.squaremap.paper.listener.MapUpdateListeners;
 import xyz.jpenilla.squaremap.paper.listener.WorldLoadListener;
+import xyz.jpenilla.squaremap.paper.network.PaperNetworking;
 import xyz.jpenilla.squaremap.paper.util.Folia;
 
 @DefaultQualifier(NonNull.class)
@@ -28,6 +29,7 @@ import xyz.jpenilla.squaremap.paper.util.Folia;
 public final class SquaremapPaper implements SquaremapPlatform {
     private final Injector injector;
     private final SquaremapCommon common;
+    private final PaperNetworking networking;
     private final JavaPlugin plugin;
     private final Server server;
     private @MonotonicNonNull Squaremap api;
@@ -41,18 +43,21 @@ public final class SquaremapPaper implements SquaremapPlatform {
         final Injector injector,
         final SquaremapCommon squaremapCommon,
         final Server server,
-        final JavaPlugin plugin
+        final JavaPlugin plugin,
+        final PaperNetworking networking
     ) {
         this.injector = injector;
         this.common = squaremapCommon;
         this.server = server;
         this.plugin = plugin;
+        this.networking = networking;
     }
 
     void init() {
         this.common.init();
         this.api = this.injector.getInstance(Squaremap.class);
         this.server.getServicesManager().register(Squaremap.class, this.api, this.plugin, ServicePriority.Normal);
+        this.networking.register();
         new Metrics(this.plugin, 13571); // https://bstats.org/plugin/bukkit/squaremap/13571
         if (Folia.FOLIA) {
             this.server.getPluginManager().registerEvents(new FoliaInitListener(this.plugin, this.common::updateCheck), this.plugin);
@@ -62,6 +67,7 @@ public final class SquaremapPaper implements SquaremapPlatform {
     }
 
     void onDisable() {
+        this.networking.unregister();
         if (this.api != null) {
             this.server.getServicesManager().unregister(Squaremap.class, this.api);
         }
@@ -76,14 +82,14 @@ public final class SquaremapPaper implements SquaremapPlatform {
         this.mapUpdateListeners = this.injector.getInstance(MapUpdateListeners.class);
         this.mapUpdateListeners.register();
 
-        final Runnable updatePlayersTask = this.injector.getInstance(PlayerDataPublisher.class);
+        final Runnable updatePlayersTask = this.injector.getInstance(UpdatePlayers.class);
         this.updatePlayers = this.server.getGlobalRegionScheduler().runAtFixedRate(
             this.plugin,
             $ -> updatePlayersTask.run(),
             20,
             20
         );
-        final Runnable updateWorldDataTask = this.injector.getInstance(WebSettingsPublisher.class);
+        final Runnable updateWorldDataTask = this.injector.getInstance(UpdateWorldData.class);
         this.updateWorldData = this.server.getGlobalRegionScheduler().runAtFixedRate(
             this.plugin,
             $ -> updateWorldDataTask.run(),

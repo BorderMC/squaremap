@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(ChunkMap.class)
-public interface ChunkMapAccess extends xyz.jpenilla.squaremap.common.chunksnapshot.ChunkMapAccess {
+public interface ChunkMapAccess extends xyz.jpenilla.squaremap.common.util.ChunkMapAccess {
     @Invoker("getVisibleChunkIfPresent")
     @Override
     ChunkHolder squaremap$getVisibleChunkIfPresent(long pos);
@@ -24,8 +24,4 @@ public interface ChunkMapAccess extends xyz.jpenilla.squaremap.common.chunksnaps
     @Accessor("pendingUnloads")
     @Override
     Long2ObjectLinkedOpenHashMap<ChunkHolder> squaremap$pendingUnloads();
-
-    @Invoker("upgradeChunkTag")
-    @Override
-    CompoundTag squaremap$upgradeChunkTag(CompoundTag compoundTag);
 }

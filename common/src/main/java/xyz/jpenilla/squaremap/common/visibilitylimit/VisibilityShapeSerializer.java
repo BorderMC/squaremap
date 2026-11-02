@@ -71,6 +71,12 @@ public final class VisibilityShapeSerializer implements TypeSerializer<Visibilit
             node.raw(null);
             return;
         }
-        throw new UnsupportedOperationException("Visibility shapes are only read from config");
+        if (obj instanceof WorldBorderShape) {
+            // writing default config
+            node.node("type").set("world-border");
+            node.node("enabled").set("false");
+            return;
+        }
+        throw new UnsupportedOperationException();
     }
 }

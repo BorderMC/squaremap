@@ -9,9 +9,9 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.event.Event;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLevelEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.resources.Identifier;
@@ -21,17 +21,15 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.framework.qual.DefaultQualifier;
 import xyz.jpenilla.squaremap.common.SquaremapCommon;
 import xyz.jpenilla.squaremap.common.SquaremapPlatform;
+import xyz.jpenilla.squaremap.common.WorldManagerImpl;
+import xyz.jpenilla.squaremap.common.data.MapWorldInternal;
 import xyz.jpenilla.squaremap.common.inject.SquaremapModulesBuilder;
-import xyz.jpenilla.squaremap.common.web.PlayerDataPublisher;
-import xyz.jpenilla.squaremap.common.web.WebSettingsPublisher;
-import xyz.jpenilla.squaremap.common.world.MapWorldInternal;
-import xyz.jpenilla.squaremap.common.world.WorldManagerImpl;
-import xyz.jpenilla.squaremap.fabric.client.FabricFluidColorExporter;
+import xyz.jpenilla.squaremap.common.task.UpdatePlayers;
+import xyz.jpenilla.squaremap.common.task.UpdateWorldData;
+import xyz.jpenilla.squaremap.fabric.data.FabricMapWorld;
 import xyz.jpenilla.squaremap.fabric.inject.module.FabricModule;
 import xyz.jpenilla.squaremap.fabric.listener.FabricMapUpdates;
-import xyz.jpenilla.squaremap.fabric.player.FabricPlayerManager;
-import xyz.jpenilla.squaremap.fabric.server.FabricServerAccess;
-import xyz.jpenilla.squaremap.fabric.world.FabricMapWorld;
+import xyz.jpenilla.squaremap.fabric.network.FabricNetworking;
 
 @DefaultQualifier(NonNull.class)
 public final class SquaremapFabric implements SquaremapPlatform {
@@ -40,8 +38,8 @@ public final class SquaremapFabric implements SquaremapPlatform {
     private final FabricServerAccess serverAccess;
     private final WorldManagerImpl worldManager;
     private final ModContainer modContainer;
-    private @Nullable PlayerDataPublisher updatePlayers;
-    private @Nullable WebSettingsPublisher updateWorldData;
+    private @Nullable UpdatePlayers updatePlayers;
+    private @Nullable UpdateWorldData updateWorldData;
 
     SquaremapFabric() {
         this.injector = Guice.createInjector(
@@ -60,7 +58,7 @@ public final class SquaremapFabric implements SquaremapPlatform {
         this.serverAccess = this.injector.getInstance(FabricServerAccess.class);
         this.registerLifecycleListeners();
         this.injector.getInstance(FabricMapUpdates.class).register();
-        this.injector.getInstance(FabricPlayerManager.class).setupAttachments();
+        this.injector.getInstance(FabricNetworking.class).register();
     }
 
     private void registerLifecycleListeners() {
@@ -78,18 +76,18 @@ public final class SquaremapFabric implements SquaremapPlatform {
         }
 
         final Identifier early = Identifier.parse("squaremap:early");
-        ServerLevelEvents.LOAD.register(early, (server, level) -> this.worldManager.initWorld(level));
-        ServerLevelEvents.LOAD.addPhaseOrdering(early, Event.DEFAULT_PHASE);
+        ServerWorldEvents.LOAD.register(early, (server, level) -> this.worldManager.initWorld(level));
+        ServerWorldEvents.LOAD.addPhaseOrdering(early, Event.DEFAULT_PHASE);
 
-        ServerLevelEvents.UNLOAD.register((server, level) -> this.worldManager.worldUnloaded(level));
+        ServerWorldEvents.UNLOAD.register((server, level) -> this.worldManager.worldUnloaded(level));
 
         ServerTickEvents.END_SERVER_TICK.register(new TickEndListener());
     }
 
     @Override
     public void startCallback() {
-        this.updatePlayers = this.injector.getInstance(PlayerDataPublisher.class);
-        this.updateWorldData = this.injector.getInstance(WebSettingsPublisher.class);
+        this.updatePlayers = this.injector.getInstance(UpdatePlayers.class);
+        this.updateWorldData = this.injector.getInstance(UpdateWorldData.class);
     }
 
     @Override
@@ -153,7 +151,7 @@ public final class SquaremapFabric implements SquaremapPlatform {
             ClientLifecycleEvents.CLIENT_STOPPING.register($ -> this.squaremap.shutdown());
 
             final AtomicBoolean exportedFluids = new AtomicBoolean(false);
-            ClientTickEvents.START_LEVEL_TICK.register((clientLevel) -> {
+            ClientTickEvents.START_WORLD_TICK.register((clientLevel) -> {
                 if (!exportedFluids.getAndSet(true)) {
                     this.fluidColorExporter.export(clientLevel.registryAccess());
                 }

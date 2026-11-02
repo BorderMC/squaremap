@@ -17,13 +17,12 @@ import net.neoforged.neoforge.event.level.BlockGrowFeatureEvent;
 import net.neoforged.neoforge.event.level.ChunkEvent;
 import net.neoforged.neoforge.event.level.ExplosionEvent;
 import net.neoforged.neoforge.event.level.PistonEvent;
-import net.neoforged.neoforge.event.level.block.BreakBlockEvent;
 import net.neoforged.neoforge.event.level.block.CreateFluidSourceEvent;
 import net.neoforged.neoforge.event.level.block.CropGrowEvent;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;
-import xyz.jpenilla.squaremap.common.coordinate.ChunkCoordinate;
-import xyz.jpenilla.squaremap.common.world.WorldManagerImpl;
+import xyz.jpenilla.squaremap.common.WorldManagerImpl;
+import xyz.jpenilla.squaremap.common.data.ChunkCoordinate;
 
 @DefaultQualifier(NonNull.class)
 public final class ForgeMapUpdates {
@@ -36,7 +35,7 @@ public final class ForgeMapUpdates {
 
     public void register() {
         List.of(
-            BreakBlockEvent.class,
+            BlockEvent.BreakEvent.class,
             BlockEvent.EntityPlaceEvent.class,
             CropGrowEvent.Post.class,
             BlockEvent.BlockToolModificationEvent.class,
@@ -50,7 +49,7 @@ public final class ForgeMapUpdates {
             }
             if (event instanceof BlockEvent.EntityMultiPlaceEvent multiPlace) {
                 multiPlace.getReplacedBlockSnapshots().stream().map(BlockSnapshot::getPos)
-                    .forEach(pos -> this.markBlock(level, pos));
+                    .forEach(pos -> this.markBlock(level, event.getPos()));
             }
             this.markBlock(level, event.getPos());
         }));
@@ -109,7 +108,7 @@ public final class ForgeMapUpdates {
     }
 
     private void markChunk(final ServerLevel level, final ChunkPos chunk) {
-        this.markChunk(level, new ChunkCoordinate(chunk.x(), chunk.z()));
+        this.markChunk(level, new ChunkCoordinate(chunk.x, chunk.z));
     }
 
     private void markChunk(final ServerLevel level, final ChunkCoordinate chunk) {

@@ -91,7 +91,8 @@ dependencies {
 
 ### Prerequisites and setup
 - An up-to date JDK (i.e. Java 21 or later)
-- [Bun](https://bun.sh/) installed for building the web UI
+- [Bun](https://bun.sh/) installed for building the web UI (on Windows, Node.js
+  and `npx` are also supported for the Gradle build)
 - Run `bun install` in the `web` directory to install the web UI dependencies
 
 ### Plugin

@@ -4,7 +4,7 @@ import net.minecraft.core.BlockPos;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;
 import xyz.jpenilla.squaremap.api.MapWorld;
-import xyz.jpenilla.squaremap.common.coordinate.CoordinateConversions;
+import xyz.jpenilla.squaremap.common.util.Numbers;
 
 /**
  * Limits map drawing to a rectangular region.
@@ -43,15 +43,15 @@ final class RectangleShape implements VisibilityShape {
         this.minBlockZ = min.getZ();
         this.maxBlockZ = max.getZ();
 
-        this.minChunkX = CoordinateConversions.blockToChunk(this.minBlockX);
-        this.maxChunkX = CoordinateConversions.blockToChunk(this.maxBlockX);
-        this.minChunkZ = CoordinateConversions.blockToChunk(this.minBlockZ);
-        this.maxChunkZ = CoordinateConversions.blockToChunk(this.maxBlockZ);
+        this.minChunkX = Numbers.blockToChunk(this.minBlockX);
+        this.maxChunkX = Numbers.blockToChunk(this.maxBlockX);
+        this.minChunkZ = Numbers.blockToChunk(this.minBlockZ);
+        this.maxChunkZ = Numbers.blockToChunk(this.maxBlockZ);
 
-        this.minRegionX = CoordinateConversions.blockToRegion(this.minBlockX);
-        this.maxRegionX = CoordinateConversions.blockToRegion(this.maxBlockX);
-        this.minRegionZ = CoordinateConversions.blockToRegion(this.minBlockZ);
-        this.maxRegionZ = CoordinateConversions.blockToRegion(this.maxBlockZ);
+        this.minRegionX = Numbers.blockToRegion(this.minBlockX);
+        this.maxRegionX = Numbers.blockToRegion(this.maxBlockX);
+        this.minRegionZ = Numbers.blockToRegion(this.minBlockZ);
+        this.maxRegionZ = Numbers.blockToRegion(this.maxBlockZ);
     }
 
     @Override
@@ -70,5 +70,20 @@ final class RectangleShape implements VisibilityShape {
     public boolean shouldRenderColumn(final MapWorld world, final int blockX, final int blockZ) {
         return blockX >= this.minBlockX && blockX <= this.maxBlockX
             && blockZ >= this.minBlockZ && blockZ <= this.maxBlockZ;
+    }
+
+    @Override
+    public int countChunksInRegion(final MapWorld world, final int regionX, final int regionZ) {
+        int regionMinChunkX = Numbers.regionToChunk(regionX);
+        int regionMaxChunkX = Numbers.regionToChunk(regionX + 1) - 1;
+        int regionMinChunkZ = Numbers.regionToChunk(regionZ);
+        int regionMaxChunkZ = Numbers.regionToChunk(regionZ + 1) - 1;
+
+        int chunkWidth = Math.min(regionMaxChunkX, this.maxChunkX) - Math.max(regionMinChunkX, this.minChunkX) + 1;
+        int chunkHeight = Math.min(regionMaxChunkZ, this.maxChunkZ) - Math.max(regionMinChunkZ, this.minChunkZ) + 1;
+        if (chunkWidth < 0 || chunkHeight < 0) {
+            return 0;
+        }
+        return chunkWidth * chunkHeight;
     }
 }
